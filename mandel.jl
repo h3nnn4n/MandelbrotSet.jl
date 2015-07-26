@@ -1,29 +1,32 @@
-@everywhere screenx = 1920
-@everywhere screeny = 1080
-#=@everywhere screenx = 800=#
-#=@everywhere screeny = 600=#
+#=@everywhere screenx = 1920=#
+#=@everywhere screeny = 1080=#
+@everywhere screenx = 800
+@everywhere screeny = 600
 
-@everywhere minx    = (-2.5)
-@everywhere maxx    = ( 1.5)
-@everywhere miny    = (-2.0)
-@everywhere maxy    = ( 2.0)
+@everywhere xcenter = (-0.743030)
+@everywhere ycenter = ( 0.126433)
 
-#=@everywhere minx    = (-2.5)=#
-#=@everywhere maxx    = ( 0.0)=#
-#=@everywhere miny    = (-2.0)=#
-#=@everywhere maxy    = ( 0.0)=#
+@everywhere zoom    = ( 0.0051)
+
+@everywhere minx    = (xcenter + zoom)
+@everywhere maxx    = (xcenter - zoom)
+@everywhere miny    = (ycenter + zoom)
+@everywhere maxy    = (ycenter - zoom)
 
 @everywhere stepx   = (screenx/(maxx-minx))
 @everywhere stepy   = (screeny/(maxy-miny))
 
-@everywhere iters   = 200
+@everywhere iters   = 600
 
 @everywhere function julia(c)
-    z = 0
+    z = 0.0
     for i = 1:iters
-        z = z^2+c
+        z = z^2 + c
         if abs(z)>2.0
-            return i
+            w = int( ((i + 1 - log2(log2(abs(z)))) / iters) * 255)
+            #=w = int((i + 1 - log(log(abs(z)))/log(2)) / iters) * 255=#
+            #=println(w)=#
+            return w
         end
     end
     return 0
@@ -76,7 +79,6 @@ end
     #=println("Maximum took:    \t", toq())=#
 
 function get_color(pal, index)
-    #=println(index)=#
     if index == 0
         index += 1
     end
@@ -123,6 +125,8 @@ function main()
     tic()
     @sync dist_bitmap = DArray(getPixel, (screenx, screeny))
 
+    #=bm = [Complex(minx + x*(maxx-minx)/screenx, miny + y*(maxy-miny)/screeny) for x in 0:screenx, y in 0:screeny]=#
+
     timert = toq()
     timer += timert
 
@@ -132,6 +136,8 @@ function main()
 
     tic()
     @sync bitmap = convert(Array, dist_bitmap)
+
+    #=bitmap = pmap(julia, bm)=#
 
     timert = toq()
     timer += timert
@@ -144,29 +150,27 @@ function main()
     max = maximum(bitmap)
     max /= 255
 
-    histogram = Array(Int, iters+1)
+    #=histogram = Array(Int, iters+1)=#
+    histogram = Array(Int, 256)
     fill!(histogram, 0)
 
     x, y = size(bitmap)
     bitmap2 = Array(Int, (x, y))
+
     for i = 1:x, j = 1:y
         bitmap2[i,j] = int64(bitmap[i,j] / max)
         teste = bitmap[i, j]
         #=print(teste, " ")=#
+
         if bitmap[i, j] == 0
 
         else
-            histogram[ bitmap[i, j] ] += 1
+            #=println(bitmap[i, j] + 1, " ")=#
+            histogram[ bitmap[i, j] + 1 ] += 1
         end
     end
 
     total_hist = sum(histogram)
-
-    #=for i in 2:iters=#
-        #=histogram[i] += histogram[i-1]=#
-        #=histogram[i] = int((histogram[i] / total_hist) * 255)=#
-    #=end=#
-
 
     timert = toq()
     timer += timert
@@ -180,27 +184,22 @@ function main()
     #=fill!(bitmap_color, (0, 0, 0))=#
 
     for i in 1:x, j in 1:y
-        #=println(bitmap[i, j])=#
-
-        #=println(i, " ", j)=#
-
         if bitmap[i, j] == 0
             bitmap_color[i, j] = (0, 0, 0)
         else
 
-            #=hue = 0.0=#
-            #=for k in 1:bitmap[i, j]=#
-                #=hue += histogram[k] / total_hist=#
-            #=end=#
+            # Normalized histogram
+            hue = 0.0
+            for k in 1:bitmap[i, j]
+                hue += float(histogram[k] / total_hist)
+            end
 
-            #=bitmap_color[i, j] = get_color(pal, histogram[int(hue * 255)+1])=#
+            bitmap_color[i, j] = get_color(pal, int(hue * 254)+1)
 
             # Intiger escape time
-            bitmap_color[i, j] = get_color(pal, bitmap2[i, j])
+            #=bitmap_color[i, j] = get_color(pal, bitmap2[i, j])=#
         end
     end
-
-    #=print(STDERR, bitmap_color)=#
 
     timert = toq()
     timer += timert
