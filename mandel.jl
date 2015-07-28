@@ -6,7 +6,7 @@
 @everywhere xcenter = (-0.743030)
 @everywhere ycenter = ( 0.126433)
 
-@everywhere zoom    = ( 0.0051)
+@everywhere zoom    = ( 0.51)
 
 @everywhere minx    = (xcenter + zoom)
 @everywhere maxx    = (xcenter - zoom)
@@ -18,7 +18,7 @@
 
 @everywhere iters   = 600
 
-@everywhere function julia(c)
+@everywhere function mandel(c)
     z = 0.0
     for i = 1:iters
         z = z^2 + c
@@ -41,7 +41,7 @@ end
     for y = I[2]
         for x = I[1]
             c = Complex(minx + x*(maxx-minx)/screenx, miny + y*(maxy-miny)/screeny)
-            e[x-xmin, y-ymin] = julia(c)
+            e[x-xmin, y-ymin] = mandel(c)
         end
     end
 
@@ -137,7 +137,7 @@ function main()
     tic()
     @sync bitmap = convert(Array, dist_bitmap)
 
-    #=bitmap = pmap(julia, bm)=#
+    #=bitmap = pmap(mandel, bm)=#
 
     timert = toq()
     timer += timert
