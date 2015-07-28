@@ -24,8 +24,6 @@
         z = z^2 + c
         if abs(z)>2.0
             w = int( ((i + 1 - log2(log2(abs(z)))) / iters) * 255)
-            #=w = int((i + 1 - log(log(abs(z)))/log(2)) / iters) * 255=#
-            #=println(w)=#
             return w
         end
     end
@@ -33,7 +31,7 @@
 end
 
 @everywhere function getPixel(I)
-    e = Array(Int64, (size(I[1],1), size(I[2],1)))
+    e = Array(Float64, (size(I[1],1), size(I[2],1)))
 
     xmin = I[1][1] - 1
     ymin = I[2][1] - 1
@@ -75,9 +73,6 @@ function load_pal(name)
     return pal
 end
 
-    #=tic()=#
-    #=println("Maximum took:    \t", toq())=#
-
 function get_color(pal, index)
     if index == 0
         index += 1
@@ -93,7 +88,6 @@ function ppm_write(img)
     x, y = size(img)
     write(out, "$x $y 255\n")
 
-    #=for i = 1:x, j = 1:y=#
     for j = 1:y, i = 1:x
         p = img[i,j]
 
@@ -113,7 +107,7 @@ function main()
     println("\nStarting")
 
     tic()
-    pal = load_pal("pals/sunrise2.ppm")
+    pal = load_pal("pals/blue2puble.ppm")
 
     timert :: Float64 = toq()
     timer  :: Float64 = timert
@@ -125,8 +119,6 @@ function main()
     tic()
     @sync dist_bitmap = DArray(getPixel, (screenx, screeny))
 
-    #=bm = [Complex(minx + x*(maxx-minx)/screenx, miny + y*(maxy-miny)/screeny) for x in 0:screenx, y in 0:screeny]=#
-
     timert = toq()
     timer += timert
 
@@ -136,8 +128,6 @@ function main()
 
     tic()
     @sync bitmap = convert(Array, dist_bitmap)
-
-    #=bitmap = pmap(mandel, bm)=#
 
     timert = toq()
     timer += timert
@@ -160,12 +150,10 @@ function main()
     for i = 1:x, j = 1:y
         bitmap2[i,j] = int64(bitmap[i,j] / max)
         teste = bitmap[i, j]
-        #=print(teste, " ")=#
 
         if bitmap[i, j] == 0
 
         else
-            #=println(bitmap[i, j] + 1, " ")=#
             histogram[ bitmap[i, j] + 1 ] += 1
         end
     end
@@ -181,7 +169,6 @@ function main()
 
     tic()
     bitmap_color = Array((Int, Int, Int), (x,y))
-    #=fill!(bitmap_color, (0, 0, 0))=#
 
     for i in 1:x, j in 1:y
         if bitmap[i, j] == 0
