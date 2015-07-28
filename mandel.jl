@@ -6,7 +6,7 @@
 @everywhere xcenter = (-0.743030)
 @everywhere ycenter = ( 0.126433)
 
-@everywhere zoom    = ( 0.51)
+@everywhere zoom    = ( 0.0051)
 
 @everywhere minx    = (xcenter + zoom)
 @everywhere maxx    = (xcenter - zoom)
@@ -16,7 +16,7 @@
 @everywhere stepx   = (screenx/(maxx-minx))
 @everywhere stepy   = (screeny/(maxy-miny))
 
-@everywhere iters   = 600
+@everywhere iters   = 1200
 
 @everywhere function mandel(c)
     z = 0.0
@@ -107,7 +107,7 @@ function main()
     println("\nStarting")
 
     tic()
-    pal = load_pal("pals/blue2puble.ppm")
+    pal = load_pal("pals/sunrise.ppm")
 
     timert :: Float64 = toq()
     timer  :: Float64 = timert
