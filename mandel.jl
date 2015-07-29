@@ -1,12 +1,12 @@
-#=@everywhere screenx = 1920=#
-#=@everywhere screeny = 1080=#
 @everywhere screenx = 800
 @everywhere screeny = 600
+@everywhere screenx = 1920
+@everywhere screeny = 1080
 
-@everywhere xcenter = (-0.743030)
-@everywhere ycenter = ( 0.126433)
+@everywhere xcenter = (-.743643900055)
+@everywhere ycenter = ( .131825890901)
 
-@everywhere zoom    = ( 0.0051)
+@everywhere zoom    = ( .000000049304)
 
 @everywhere minx    = (xcenter + zoom)
 @everywhere maxx    = (xcenter - zoom)
@@ -16,7 +16,7 @@
 @everywhere stepx   = (screenx/(maxx-minx))
 @everywhere stepy   = (screeny/(maxy-miny))
 
-@everywhere iters   = 1200
+@everywhere iters   = 5000
 
 @everywhere function mandel(c)
     z = 0.0
