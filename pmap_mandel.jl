@@ -1,12 +1,17 @@
 @everywhere screenx = 800
 @everywhere screeny = 600
-#=@everywhere screenx = 1920=#
-#=@everywhere screeny = 1080=#
+@everywhere screenx = 1920
+@everywhere screeny = 1080
 
-@everywhere xcenter = (-.743643900055)
-@everywhere ycenter = ( .131825890901)
+@everywhere xcenter = (-.743643887037151)
+@everywhere ycenter = ( .131825904205330)
 
-@everywhere zoom    = ( .000000049304)
+@everywhere zoom    = ( .000000000051299)
+
+#=@everywhere xcenter = (-.743643900055)=#
+#=@everywhere ycenter = ( .131825890901)=#
+
+#=@everywhere zoom    = ( .000000049304)=#
 
 #=@everywhere xcenter = (-.743643135)=#
 #=@everywhere ycenter = ( .131825963)=#
@@ -16,7 +21,7 @@
 #=@everywhere xcenter = (-0.743030)=#
 #=@everywhere ycenter = ( 0.126433)=#
 
-#=@everywhere zoom    = ( 0.00000001251)=#
+#=@everywhere zoom    = ( 0.0001251)=#
 
 @everywhere minx    = (xcenter + zoom)
 @everywhere maxx    = (xcenter - zoom)
@@ -26,18 +31,37 @@
 @everywhere stepx   = (screenx/(maxx-minx))
 @everywhere stepy   = (screeny/(maxy-miny))
 
-@everywhere iters   = 50000
+@everywhere iters   = 5000
+
+@everywhere aa      = 1
 
 @everywhere function mandel(c)
+    dx = ((2 * zoom) / screenx) / (aa*2 + 1)
+    dy = ((2 * zoom) / screeny) / (aa*2 + 1)
+
+    bm = Array((Any), (aa*2 + 1, aa*2 + 1))
+
+    for i in 1:(aa*2 + 1), j in 1:(aa*2 + 1)
+        d = complex(dx * (i-aa), dy * (j-aa))
+        bm[i, j] = m(c + d)
+    end
+
+    it = sum([ bm[i, j][1] for i in 1:(aa*2 + 1), j in 1:(aa*2 + 1) ]) / ((aa*2 + 1)^2)
+    zz = sum([ bm[i, j][2] for i in 1:(aa*2 + 1), j in 1:(aa*2 + 1) ]) / ((aa*2 + 1)^2)
+
+    return (it, zz)
+end
+
+@everywhere function m(c)
     z = 0.0
     for i = 1:iters
         z = z^2 + c
         if abs(z)>2.0
-            w = int( ((i + 1 - log2(log2(abs(z)))) / iters) * 255)
+            w = (i, z)
             return w
         end
     end
-    return 0
+    return (0, z)
 end
 
 function load_pal(name)
@@ -101,7 +125,7 @@ function main()
     println("\nStarting")
 
     tic()
-    pal = load_pal("pals/sunrise.ppm")
+    pal = load_pal("pals/reds.ppm")
 
     timert :: Float64 = toq()
     timer  :: Float64 = timert
@@ -127,7 +151,7 @@ function main()
 
     tic()
 
-    bitmap = reshape(pmap(mandel, cmap, err_retry=true, err_stop=false), (screenx, screeny))
+    bitmap_z = reshape(pmap(mandel, cmap, err_retry=true, err_stop=false), (screenx, screeny))
 
     timert = toq()
     timer += timert
@@ -137,28 +161,46 @@ function main()
     ################################################
 
     tic()
-    max = maximum(bitmap)
-    max /= 255
+    #=bitmap = reshape([ (bitmap_z[i, j][1] ) for i in 1:screenx, j in 1:screeny], (screenx, screeny))=#
+
+    bitmap_t = Array(Float64, (screenx, screeny))
+
+    for i in 1:screenx, j in 1:screeny
+        if bitmap_z[i, j][1] == 0
+            bitmap_t[i, j] = 0.0
+        else
+            mag = abs(bitmap_z[i, j][2])
+            #=print("mag = ", mag, " ")=#
+            #=print("log = ", log(mag), " \n")=#
+            bitmap_t[i, j] = (bitmap_z[i, j][1] + 1 - log( abs(log(mag))) / log(2))
+        end
+    end
 
     #=histogram = Array(Int, iters+1)=#
-    histogram = Array(Int, 256)
+    histogram = Array(Int, 255)
     fill!(histogram, 0)
 
-    x, y = size(bitmap)
-    bitmap2 = Array(Int, (x, y))
+    x, y = size(bitmap_t)
+
+    max = maximum(bitmap_t) / 255
+
+    println(max)
+
+    bitmap = [ int(bitmap_t[i, j] / max) for i in 1:x, j in 1:y ]
 
     for i = 1:x, j = 1:y
-        bitmap2[i,j] = int64(bitmap[i,j] / max)
-        teste = bitmap[i, j]
 
-        if bitmap[i, j] == 0
+        #=println(bitmap[i, j] )=#
 
+        if bitmap[i, j] <= 0
+            #=histogram[ 1 ] += 1=#
         else
-            histogram[ bitmap[i, j] + 1 ] += 1
+            histogram[ bitmap[i, j] ] += 1
         end
     end
 
     total_hist = sum(histogram)
+
 
     timert = toq()
     timer += timert
@@ -174,17 +216,15 @@ function main()
         if bitmap[i, j] == 0
             bitmap_color[i, j] = (0, 0, 0)
         else
+            #=hue = 0.0=#
+            #=for k in 1:bitmap[i, j]=#
+                #=hue += float(histogram[k] / total_hist)=#
+            #=end=#
 
-            # Normalized histogram
-            hue = 0.0
-            for k in 1:bitmap[i, j]
-                hue += float(histogram[k] / total_hist)
-            end
+            #=bitmap_color[i, j] = get_color(pal, int(hue * 254)+1)=#
 
-            bitmap_color[i, j] = get_color(pal, int(hue * 254)+1)
-
-            # Intiger escape time
-            #=bitmap_color[i, j] = get_color(pal, bitmap2[i, j])=#
+            bitmap_color[i, j] = get_color(pal, bitmap[i, j])
+            #=bitmap_color[i, j] = get_color(pal, (bitmap[i, j] * 4) % 255)=#
         end
     end
 
