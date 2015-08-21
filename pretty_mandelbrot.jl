@@ -1,17 +1,22 @@
 screenx = 800
 screeny = 600
 
-xcenter = (-0.650)
-ycenter = ( 0.0)
+xcenter = -.74364085
+ycenter =  .13182733
 
-zoom    = (-1.500)
+zoom    = 0.00012068
+
+#=xcenter = (-0.650)=#
+#=ycenter = ( 0.0)=#
+
+#=zoom    = (-1.500)=#
 
 minx    = (xcenter + zoom)
 maxx    = (xcenter - zoom)
 miny    = (ycenter + zoom)
 maxy    = (ycenter - zoom)
 
-iters   = 150
+iters   = 2500
 
 function load_pal(name)
     file_pal = open(name, "r")
@@ -78,7 +83,7 @@ function mandel(c)
     for i = 1:iters
         z = z^2 + c
 
-        if abs(z)>2.0
+        if abs(z) > 250.0
             return (i, z)
         end
     end
@@ -87,7 +92,7 @@ function mandel(c)
 end
 
 function main()
-    pal = load_pal("pals/reds.ppm")
+    pal = load_pal("pals/sand.ppm")
 
     bitmap_c     = Array((Int64, Complex), (screenx, screeny))
     bitmap_color = Array((Int, Int, Int) , (screenx, screeny))
@@ -108,13 +113,39 @@ function main()
 
     max = 255 / max
 
+    # Vinary iteration counter
+
     for x in 1:screenx, y in 1:screeny
         if bitmap_c[x, y][1] == 0
+            bitmap_color[x, y] = (100, 100, 100)
+        elseif mod(bitmap_c[x, y][1], 2) == 0
             bitmap_color[x, y] = (0, 0, 0)
         else
-            bitmap_color[x, y] = get_color(pal, int(bitmap_c[x, y][1] * max))
+            bitmap_color[x, y] = (255, 255, 255)
         end
     end
+
+    # Binary decomposition
+
+    #=for x in 1:screenx, y in 1:screeny=#
+        #=if bitmap_c[x, y][1] == 0=#
+            #=bitmap_color[x, y] = (100, 100, 100)=#
+        #=elseif real(bitmap_c[x, y][2]) < 0=#
+            #=bitmap_color[x, y] = (0, 0, 0)=#
+        #=else=#
+            #=bitmap_color[x, y] = (255, 255, 255)=#
+        #=end=#
+    #=end=#
+
+    # Integer escape time
+
+    #=for x in 1:screenx, y in 1:screeny=#
+        #=if bitmap_c[x, y][1] == 0=#
+            #=bitmap_color[x, y] = (0, 0, 0)=#
+        #=else=#
+            #=bitmap_color[x, y] = get_color(pal, int(bitmap_c[x, y][1] * max))=#
+        #=end=#
+    #=end=#
 
     ppm_write(bitmap_color)
 
